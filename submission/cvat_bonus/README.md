@@ -1,27 +1,14 @@
-# CVAT Bonus — Day 09, Task #22 / Job #22
+# Bonus CVAT — Day 09
 
-Nguồn: CVAT local, dữ liệu Day 09, 5 ảnh đã chọn từ `submission/reports/07_error_list_v3.csv`.
+Tôi tạo Task #22 / Job #22 trong CVAT local để kiểm tra box nhỏ của 5 ảnh: `img_0026`, `img_0051`, `img_0069`, `img_0161`, `img_0183`. Tổng số box đã import là 33.
 
-## Ảnh và bằng chứng
+Tôi lọc theo điều kiện **Width < 20 px**. Theo dữ liệu nhãn đã chuẩn bị, năm ảnh có lần lượt **6, 3, 2, 3, 1** box khớp bộ lọc, tổng **15**. Trong báo cáo pipeline `submission/reports/07_error_list_v3.csv`, số cảnh báo **`BOX_TINY`** tương ứng là **1, 1, 1, 3, 1**, tổng **7**. Hai phép kiểm khác nhau: CVAT xét chiều rộng dưới 20 px, pipeline xét cạnh ngắn dưới 12 px.
 
-- `filter_width_lt20.png`: ảnh chụp màn hình mới do học viên cung cấp; điều kiện lọc **Width < 20**.
-- `img_0161_filtered_3objects.png`: ảnh chụp CVAT Job #22, frame 3 (`img_0161.jpg`) sau lọc, panel **Items: 3**.
-- `vin_er_frame3/01-original.png`: ảnh frame 3 xuất từ Vin-ER, không chứa box overlay.
-- `vin_er_frame3/02-annotated.png`: ảnh có overlay theo nhãn đã Save. Ảnh overlay có thể vẽ cả các shape bị CVAT filter ẩn.
-- `vin_er_frame3/03-annotations.json`: JSON 4 box đã Save từ API Job 22, xuất *read-only*.
-- `vin_er_frame3/04-qc.md`: báo cáo Vin-ER chỉ kiểm hình học; không phải nhãn chuẩn hay xác nhận độ đầy đủ.
-- `vin_er_frame3/README.txt`: mô tả xuất từ công cụ Vin-ER.
-- `frame3_widths.csv`: các chiều rộng/cao pixel tính trực tiếp từ JSON ở trên, không chỉnh sửa dữ liệu gốc.
+Tôi kiểm tra trên CVAT ở **frame 3 (`img_0161.jpg`)**: sau khi bật bộ lọc còn **3 Objects**, khớp với ba cảnh báo `BOX_TINY` của ảnh này. Các số đếm bốn ảnh còn lại lấy từ dữ liệu nhãn, không phải từ việc duyệt từng frame trên giao diện.
 
-## Kiểm tra chéo frame 3
+Minh chứng:
 
-| Shape ID | Class | Width (px) | Height (px) | Width < 20 | BOX_TINY (cạnh ngắn < 12) |
-|---|---|---:|---:|---|---|
-| 3844 | person | 31.22 | 113.78 | Không | Không |
-| 3845 | person | 10.26 | 32.27 | Có | Có |
-| 3846 | person | 11.40 | 43.83 | Có | Có |
-| 3847 | person | 11.86 | 43.64 | Có | Có |
+- `filter_width_lt20.png`: điều kiện lọc Width < 20.
+- `img_0161_filtered_3objects.png`: frame 3 sau khi lọc, danh sách còn 3 Objects.
 
-Kết quả: 4 box đã Save, 3 box khớp Width < 20; CVAT hiển thị 3 object sau lọc. Không sửa nhãn, không dùng Vin-ER để xác nhận nhãn đúng ngữ nghĩa. Các ảnh và annotation từ dataset lab COCO hiện đã nằm trong repo nguồn; không có dữ liệu cá nhân mới.
-
-Báo cáo chính: `submission/REPORT.md` §6(b). Lưu ý `width < 20` khác `BOX_TINY` (`min(width, height) < 12`).
+Thuộc tính `can_review` của CVAT có thể đánh dấu box cần xem lại. Pipeline Day 09 dùng `05_review_queue.csv` để sắp xếp ảnh cần duyệt, không đọc thuộc tính này từ CVAT.

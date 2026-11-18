@@ -76,8 +76,8 @@ Tôi có dùng AI hỗ trợ viết bốn module theo yêu cầu đầu vào YOL
 
 Tôi tạo **Task #22 / Job #22** trên CVAT local, import nhãn YOLO 1.1 cho năm ảnh `img_0026`, `img_0051`, `img_0069`, `img_0161` và `img_0183`, tổng cộng **33 box**. Tôi dùng bộ lọc **Width < 20 px** để tìm các box nhỏ. Theo file đo kích thước, số box khớp ở năm ảnh lần lượt là **6, 3, 2, 3, 1**, tổng **15**. Báo cáo `07_error_list_v3.csv` của pipeline có **7 cảnh báo `BOX_TINY`** trên các ảnh này, lần lượt **1, 1, 1, 3, 1**. Số lượng khác nhau vì CVAT lọc riêng chiều rộng dưới 20 px, còn pipeline cảnh báo khi **một trong hai cạnh dưới 12 px**.
 
-Tôi kiểm tra trực tiếp frame 3 (`img_0161.jpg`): sau khi lọc, CVAT còn **3 Objects**, đúng bằng số cảnh báo `BOX_TINY` ở ảnh này. Tôi dùng Vin-ER xuất thêm dữ liệu để đối chiếu: ảnh có **4 box `person`** rộng **31,22; 10,26; 11,40; 11,86 px**. Ba box sau khớp điều kiện lọc, còn box rộng 31,22 px chỉ bị ẩn, không bị xóa. Các số đếm của bốn ảnh còn lại lấy từ file đo, chưa phải kết quả tôi kiểm tra từng frame bằng mắt.
+Tôi kiểm tra trực tiếp frame 3 (`img_0161.jpg`): sau khi lọc, CVAT còn **3 Objects**, đúng bằng số cảnh báo `BOX_TINY` ở ảnh này. Các số đếm của bốn ảnh còn lại lấy từ file đo, chưa phải kết quả tôi kiểm tra từng frame bằng mắt.
 
 Thuộc tính `can_review` trong CVAT có thể dùng để đánh dấu box cần xem lại. Ở pipeline, công việc tương tự được tổ chức bằng `05_review_queue.csv` dựa trên mã lỗi và mức ưu tiên; pipeline không đọc trực tiếp thuộc tính CVAT này.
 
-Ảnh chụp bộ lọc, frame sau lọc và dữ liệu kiểm tra từ Vin-ER được lưu trong `submission/cvat_bonus/`.
+Ảnh chụp điều kiện lọc và frame 3 sau khi lọc nằm trong `submission/cvat_bonus/`.
