@@ -1,62 +1,83 @@
 # Báo cáo Day 09 — Phạm Hải, 2A202604047
 
-## 1. Kết luận trước
-**HOLD — chưa được phát hành.** Nhận **224 ảnh**, loại **22** ở intake, giữ và xuất **202 ảnh** thành **bản nháp** `submission/export/clean_v1/`. Sau QC, sửa máy và **80 ảnh được người duyệt mô phỏng** (không phải người duyệt thật), còn **0 lỗi bắt buộc**, nhưng **62/202 ảnh** còn cảnh báo chưa duyệt = **30,69%**, vượt ngưỡng Hold **10%**. Số lấy từ `08_summary.json` và manifest.
+## 1. Kết luận
 
-## 2. Lỗi và phân việc
-`02_error_list_v1.csv`: **455 issue** = **58 ERROR** (22 intake + 36 QC) và **397 WARN**. Số sau tên mã là **dòng issue**, không phải số ảnh duy nhất; mẫu số **224 ảnh raw / 202 ảnh sau intake**.
+Sau khi chạy pipeline AutoQC, tôi giữ kết quả ở trạng thái **HOLD**, chưa phát hành dataset. Trong **224 ảnh** đầu vào, bước intake loại **22 ảnh** và giữ lại **202 ảnh**. Sau ba vòng kiểm tra, sửa tự động và lượt duyệt mô phỏng **80 ảnh**, pipeline không còn lỗi bắt buộc nhưng vẫn có **62/202 ảnh** mang cảnh báo chưa được duyệt (**30,69%**). Tỷ lệ này vượt ngưỡng HOLD **10%**.
 
-| Máy xử lý (mã: số dòng) | Người phải xác minh (mã: số dòng) |
+Bộ `submission/export/clean_v1/` vì vậy là **bản nháp để thử nghiệm**, không phải bản phát hành. Số liệu đối chiếu tại `08_summary.json` và `manifest.json`.
+
+## 2. Lỗi tìm được và cách xử lý
+
+Báo cáo `02_error_list_v1.csv` ghi nhận **455 dòng lỗi/cảnh báo**: **58 ERROR** (22 ở intake và 36 ở QC) cùng **397 WARN**. Đây là số lần phát hiện, không phải số ảnh khác nhau; lô ban đầu có 224 ảnh và còn 202 ảnh sau intake.
+
+| Máy xử lý | Người cần xem lại |
 |---|---|
-| `CORRUPT_IMAGE`: 2 — loại ảnh hỏng | `MISSING_LABEL_FILE`: 6 — gán nhãn còn thiếu |
-| `BAD_SIZE`: 3 — loại ảnh quá nhỏ | `EMPTY_LABEL`: 12 — xác nhận ảnh nền |
-| `DUP_IMAGE_EXACT`: 8 — loại ảnh trùng byte | `BOX_TINY`: 6 — kiểm vật nhỏ |
-| `DUP_IMAGE_NEAR`: 4 — loại ảnh gần trùng | `BOX_HUGE`: 3 — kiểm box quá lớn |
-| `LEAK_TEST`: 5 — loại ảnh rò rỉ | `CLASS_RARE`: 4 — kiểm phân bố lớp |
-| `BAD_CLASS_ID`: 6 — bỏ dòng sai | `POSSIBLE_MISSING`: 267 — nghi bỏ sót |
-| `BAD_FORMAT`: 3 — bỏ dòng hỏng | `POSSIBLE_LOOSE_BOX`: 58 — nghi box lỏng |
-| `BOX_ZERO`: 4 — bỏ box rỗng | `POSSIBLE_FALSE_POS`: 25 — nghi box thừa |
-| `BOX_OUT_OF_IMAGE`: 8 — cắt box | `POSSIBLE_WRONG_CLASS`: 22 — nghi nhầm lớp |
-| `DUP_BOX`: 7 — bỏ box lặp | `BAD_CLASS_NAME`: 2 — máy sửa bảng `names` một lần |
+| `CORRUPT_IMAGE`: 2 — ảnh hỏng | `MISSING_LABEL_FILE`: 6 — thiếu nhãn |
+| `BAD_SIZE`: 3 — ảnh quá nhỏ | `EMPTY_LABEL`: 12 — xác nhận ảnh nền |
+| `DUP_IMAGE_EXACT`: 8 — trùng byte | `BOX_TINY`: 6 — vật thể nhỏ |
+| `DUP_IMAGE_NEAR`: 4 — gần trùng | `BOX_HUGE`: 3 — box quá lớn |
+| `LEAK_TEST`: 5 — trùng tập đánh giá | `CLASS_RARE`: 4 — lớp ít đối tượng |
+| `BAD_CLASS_ID`: 6 — sai ID | `POSSIBLE_MISSING`: 267 — có thể thiếu box |
+| `BAD_FORMAT`: 3 — sai định dạng dòng | `POSSIBLE_LOOSE_BOX`: 58 — box lỏng |
+| `BOX_ZERO`: 4 — box kích thước 0 | `POSSIBLE_FALSE_POS`: 25 — có thể thừa box |
+| `BOX_OUT_OF_IMAGE`: 8 — box tràn ảnh | `POSSIBLE_WRONG_CLASS`: 22 — có thể sai lớp |
+| `DUP_BOX`: 7 — box trùng | — |
+| `BAD_CLASS_NAME`: 2 — sai tên lớp trong `data.yaml` | — |
 
-`03_fixes.csv`: **35** tác vụ (20 `drop_line`, 8 `clip_box`, 6 `needs_label`, 1 `rename_classes`). `needs_label` **không** tự tạo nhãn giả: 6 lỗi này được chuyển người. `05_review_queue.csv`: **147 ảnh**, ưu tiên theo tổng trọng số lỗi/độ tin cậy model, đứng đầu `img_0160` (**109,727**), `img_0127` (**44,588**), `img_0131` (**29,830**). `06_review_log.csv`: **80/147 ảnh** được mô phỏng duyệt. `07_error_list_v3.csv`: **301 WARN, 0 ERROR**; trong đó chỉ **62 ảnh** còn WARN **chưa được duyệt** (gate đếm theo ảnh, không theo số cờ).
+Ở bước autofix, pipeline ghi **35 thao tác** trong `03_fixes.csv`: **20 lần bỏ dòng**, **8 lần cắt box**, **6 trường hợp chuyển sang gán nhãn** và **1 lần sửa bảng tên lớp**. Tôi không để máy tự tạo nhãn cho sáu ảnh thiếu file vì như vậy dễ biến ảnh chưa được gán thành ảnh nền.
 
-## 3. Calibration hai ngưỡng
-**39 ảnh calib**, dùng hai sweep do script tạo (`submission/calibration/`). P/R = precision/recall, so với lỗi chèn có đáp án.
+Hàng đợi `05_review_queue.csv` có **147 ảnh**, ưu tiên `img_0160` (109,727 điểm), `img_0127` (44,588) và `img_0131` (29,830). Bước duyệt mô phỏng xử lý **80 ảnh**. Báo cáo vòng cuối `07_error_list_v3.csv` còn **301 cảnh báo, 0 ERROR**; trong đó **62 ảnh** vẫn chưa được duyệt.
 
-| Ngưỡng | Ban đầu → chọn | P/R trước → sau | Lý do |
+## 3. Chọn ngưỡng calibration
+
+Tôi chạy hai lượt sweep trên **39 ảnh calibration** rồi so precision và recall trước khi chốt cấu hình.
+
+| Tham số | Trước → sau | Kết quả đo | Lý do chọn |
 |---|---|---|---|
-| `duplicates.phash_dist` | **2 → 12** | `DUP_IMAGE_NEAR`: **1,00/0,50 → 1,00/0,67** | Xóa ảnh đòi **precision** cao; không chạy theo F1 đơn thuần. |
-| `second_opinion.conf` | **0,25 → 0,10** | `LOOSE_BOX`: **0,29/0,40 → 0,38/0,60**; `MISSING`: **0,50/1,00 → 0,40/1,00** | Cảnh báo chỉ gợi ý người xem: ưu tiên **recall** box lỏng, chấp nhận thêm FP. |
+| `duplicates.phash_dist` | **2 → 12** | Precision/recall của `DUP_IMAGE_NEAR`: **1,00/0,50 → 1,00/0,67** | Ưu tiên tránh loại nhầm ảnh tốt, nhưng vẫn tăng khả năng phát hiện ảnh gần trùng |
+| `second_opinion.conf` | **0,25 → 0,10** | `LOOSE_BOX`: **0,29/0,40 → 0,38/0,60**; `MISSING`: **0,50/1,00 → 0,40/1,00** | Muốn phát hiện thêm các ca đáng nghi để chuyển người xem, dù có thể tăng cảnh báo sai |
 
-**Calib đánh lừa:** pHash **16** cho P/R `DUP_IMAGE_NEAR` **1,00/0,83** trên calib, nhưng raw `img_0011` (**tennis**) và `img_0008` (**trượt tuyết**) lại bị nhầm là gần trùng (distance **16**), dù **khác ảnh**. Trái lại `img_0186` và `img_0061` thật sự là cùng cảnh (distance **10**), được bắt ở ngưỡng **12**. Vì calib chỉ có **6** ca gần trùng, không có `LEAK_TEST` và phân bố khác raw, phải thận trọng khi suy rộng.
+Có một trường hợp khiến tôi đổi lựa chọn ban đầu. Trên bộ calibration, pHash **16** đạt precision/recall **1,00/0,83** với `DUP_IMAGE_NEAR`, cao hơn ngưỡng 12. Nhưng khi xem trên raw, ngưỡng 16 lại coi `img_0011` (tennis) và `img_0008` (trượt tuyết) là gần trùng dù đó là hai cảnh khác nhau, khoảng cách pHash bằng **16**. Trong khi đó, cặp `img_0186` và `img_0061` thực sự cùng cảnh có khoảng cách **10** và vẫn được bắt ở ngưỡng 12. Vì vậy tôi chọn **12**, thay vì lấy ngưỡng có F1 cao nhất trên tập nhỏ. Bộ calib chỉ có **6 ca gần trùng**, nên kết quả ở đây chưa phản ánh hết dữ liệu raw.
 
-## 4. Cửa chặn và điểm mù
-**Thử gate âm tính:** `python -m pipeline.run --budget 0 --reports work/rep_nb --export-dir work/exp_nb` → **Rework**, mã thoát **20**, còn **6 ERROR**, **không xuất** `work/exp_nb/clean_v1/manifest.json`. Chạy mặc định → **Hold**, mã thoát **10**, có export **nháp**, không Release.
+## 4. Kiểm tra cửa chặn và điểm còn hạn chế
 
-**Điểm mù:** (1) pHash có thể nhầm hai ảnh khác nhau hoặc bỏ sót cặp trùng bị crop mạnh (minh chứng tennis/trượt tuyết ở trên). (2) Model lớn không phải nhãn chuẩn: ở calib ngưỡng chọn vẫn bỏ sót **1/6 WRONG_CLASS**, **2/5 LOOSE_BOX**; nếu model và nhãn cùng sai, cảnh báo có thể không xuất hiện. Vì vậy máy kiểm quy tắc, **người kiểm ý nghĩa**.
+Tôi thử chạy pipeline với ngân sách duyệt bằng 0:
 
-## 5. Train raw vs clean (Colab, 2 seed)
-Đã train thật bằng `scripts/train_compare.py`: **YOLO26n**, **20 epoch**, **batch 16**, **imgsz 640**, seed **0 và 1** cho mỗi biến thể; chung **val 40 / test 100 ảnh**. Raw chuẩn bị **224 ảnh**, clean **202 ảnh**. JSON gốc và `comparison.*` ở `submission/results/` (không sửa bằng tay).
+`python -m pipeline.run --budget 0 --reports work/rep_nb --export-dir work/exp_nb`
 
-| Metric (TB ± SD, 2 seed) | Raw | Clean |
+Kết quả là **Rework**, mã thoát **20**, còn **6 ERROR** và không sinh `work/exp_nb/clean_v1/manifest.json`. Khi chạy cấu hình mặc định, kết quả là **Hold**, mã thoát **10**; pipeline xuất bản nháp để tiếp tục thử nghiệm. Như vậy lỗi bắt buộc vẫn chặn việc xuất dữ liệu.
+
+Pipeline còn hai điểm yếu: pHash có thể nhầm ảnh khác nhau hoặc bỏ sót ảnh trùng bị crop mạnh; model kiểm tra chéo vẫn bỏ sót **1/6 ca `WRONG_CLASS`** và **2/5 ca `LOOSE_BOX`** trên calib. Các cảnh báo ngữ nghĩa vì thế vẫn cần người xem.
+
+## 5. So sánh train raw và clean trên Colab
+
+Tôi train hai biến thể bằng `scripts/train_compare.py` với cùng **YOLO26n**, **20 epoch**, **batch 16**, kích thước ảnh **640** và hai seed **0, 1**. Cả hai dùng chung tập validation **40 ảnh** và test **100 ảnh**. Bộ raw chuẩn bị 224 ảnh; bộ clean có 202 ảnh sau pipeline.
+
+| Chỉ số (trung bình ± độ lệch chuẩn, 2 seed) | Raw | Clean |
 |---|---:|---:|
 | mAP50 | **0,72575 ± 0,00021** | 0,71180 ± 0,00891 |
 | mAP50–95 | **0,51170 ± 0,00382** | 0,49020 ± 0,00594 |
 | Precision | 0,76355 ± 0,06116 | **0,79295 ± 0,02722** |
 | Recall | **0,64900 ± 0,02814** | 0,63530 ± 0,01725 |
 
-ΔmAP50 (clean − raw) = **−0,01395**, âm ở cả seed 0 (−0,0075) và seed 1 (−0,0204); clean có độ lệch seed lớn hơn raw. Với **chỉ 2 seed**, chưa đủ kết luận khái quát; precision chỉ tăng về trung bình. AP50 `bus` +0,0378, `person` +0,0097, `truck` −0,0975, `car` −0,0058. Nguyên nhân *có thể* gồm thay đổi số ảnh, phân bố lớp và box/nhãn còn lỗi. Đặc biệt **5 ảnh raw rò rỉ sang test** (`LEAK_TEST`) có thể làm mAP baseline cao giả; chưa định lượng được mức ảnh hưởng. Clean vẫn là **bản nháp HOLD** (62/202 cảnh báo chưa duyệt, 80 lượt duyệt mô phỏng), không phải dữ liệu chuẩn. **Không kết luận clean tốt hơn raw.** Xem phân tích và giới hạn: `submission/results/ANALYSIS.md`.
+Chênh lệch mAP50 giữa clean và raw là **−0,01395**; ở seed 0 là **−0,0075**, còn seed 1 là **−0,0204**. Clean có precision trung bình cao hơn nhưng mAP và recall thấp hơn. Theo từng lớp, AP50 của `bus` tăng **0,0378**, `person` tăng **0,0097**, `car` giảm **0,0058**, còn `truck` giảm **0,0975**. Lớp `truck` là chỗ tôi muốn kiểm tra kỹ thêm vì mức giảm nổi bật nhất.
 
-## 6. Quyết định và dùng AI
-**HOLD** cho đến khi còn **0 ERROR** và tỷ lệ ảnh cảnh báo chưa duyệt **< 10%**; phải có kế hoạch duyệt bổ sung hợp lệ, **không** tăng ngân sách 80 hoặc đổi gate để ép Release.
+Tôi chưa thấy cơ sở để nói clean tốt hơn raw. Ngoài việc chỉ chạy hai seed, hai bộ train còn khác số ảnh và chất lượng nhãn. Đáng chú ý, intake phát hiện **5 ảnh `LEAK_TEST`** trong raw; việc raw chứa ảnh trùng tập test có thể khiến kết quả đánh giá cao hơn thực tế. Bộ clean cũng đang **HOLD** với 62 ảnh còn cảnh báo chưa duyệt, nên chưa thể xem là dữ liệu đã hoàn thiện. Nếu tiếp tục thí nghiệm, tôi sẽ ưu tiên kiểm tra lại các nhãn còn cảnh báo, đối chiếu số ảnh thực sự được YOLO nhận khi train và đánh giá lại trên một cách chia dữ liệu không bị trùng test.
 
-**AI:** (1) *Prompt*: viết bốn module kiểm YOLO `id cx cy w h`, nhận `Dataset/cfg`, trả `Issue`/log fix/verdict theo docstring/test, **không sửa** raw/tests/file đã ghim; giải thích code để người nộp hiểu. (2) *Kiểm*: đọc 4 module, chạy **79/79 pytest**, hai sweep, pipeline thật 224 ảnh, gate âm tính, đối chiếu cặp raw. (3) *Sai và sửa*: AI ban đầu thiên về pHash **16** vì F1 calib cao; kiểm ảnh phát hiện tennis/trượt tuyết bị coi trùng, hạ chọn về **12**. Người nộp tự đọc và giải thích được code trước khi nộp.
+Kết quả theo seed và biểu đồ nằm ở `submission/results/`; phân tích chi tiết trong `ANALYSIS.md`.
 
-### 6(b). Thưởng CVAT — lọc bounding box nhỏ
+## 6. Quyết định cuối và cách dùng AI
 
-Trên **CVAT local**, tạo **Task #22 / Job #22** `Day09_Bonus_BOX_TINY_047` với 5 ảnh (`img_0026`, `img_0051`, `img_0069`, `img_0161`, `img_0183`), nhập nhãn **YOLO 1.1**, tổng **33 rectangle** theo bộ dữ liệu chuẩn bị. Từ file đo box của bộ dữ liệu, điều kiện **Width < 20 px** dự kiến chọn lần lượt **6, 3, 2, 3, 1** box (tổng **15**); **đã xác nhận trực tiếp trong giao diện CVAT ở frame 3**, còn số các frame khác là kết quả đo từ nhãn đã chuẩn bị, không nhận là đã duyệt thủ công từng frame. Đối chiếu `submission/reports/07_error_list_v3.csv`: số cờ **`BOX_TINY`** tương ứng **1, 1, 1, 3, 1** (tổng **7**). Pipeline xét **cạnh ngắn < 12 px** (`min_box_px=12`), nên hai bộ lọc **khác điều kiện và không nhất thiết cho cùng số lượng**. Riêng frame **3 / `img_0161.jpg`**, CVAT hiển thị **3 Objects** sau lọc, trùng số **3 cảnh báo `BOX_TINY`** của ảnh này. Đây là đối chiếu về số lượng, không tự khẳng định các box trùng nhau nếu chưa so từng tọa độ.
+Tôi giữ quyết định **HOLD** vì dù đã hết lỗi bắt buộc, tỷ lệ ảnh còn cảnh báo chưa duyệt là **30,69%**, cao hơn ngưỡng 10%. Để chuyển sang Release, cần xử lý thêm các ảnh có cảnh báo và kiểm tra lại kết quả, không chỉ thay đổi ngưỡng.
 
-Thuộc tính checkbox `can_review` dùng để người gán đánh dấu đối tượng cho việc xem lại; **pipeline không đọc thuộc tính CVAT này**, mà tạo `05_review_queue.csv` từ mã lỗi và điểm ưu tiên để mô phỏng việc phân công duyệt. Chỉ lọc và quan sát, **không xóa hoặc sửa nhãn**. Bằng chứng: [`filter_width_lt20.png`](cvat_bonus/filter_width_lt20.png) (điều kiện lọc) và [`img_0161_filtered_3objects.png`](cvat_bonus/img_0161_filtered_3objects.png) (frame 3 còn 3 Objects).
+Tôi có dùng AI hỗ trợ viết bốn module theo yêu cầu đầu vào YOLO (`id cx cy w h`), quy tắc kiểm, định dạng kết quả `Issue` và giới hạn chỉ xử lý bản sao dữ liệu. Tôi đối chiếu code với docstring, chạy **79/79 unit test**, thử pipeline và kiểm các ca lỗi đã chèn trên tập calibration. Một lần tôi định dùng pHash 16 vì điểm trên calib tốt hơn; sau khi xem cặp ảnh tennis và trượt tuyết bị nhận nhầm là trùng, tôi chuyển về ngưỡng 12.
 
-**Đối chiếu độc lập bằng Vin-ER (chỉ đọc):** Xuất từ **Task #22, Job #22, frame 3** gồm ảnh gốc, ảnh overlay, JSON nhãn đã Save và báo cáo QC hình học. JSON ghi **4 box `person`** với chiều rộng **31,22; 10,26; 11,40; 11,86 px**; ba box cuối thỏa `Width < 20`, đồng thời đều có chiều rộng `< 12` nên khớp ba `BOX_TINY` được phát hiện trên `img_0161`. Box rộng 31,22 px bị *ẩn bởi filter*, không bị xóa. Vin-ER không kiểm chứng được việc **đủ nhãn/ngữ nghĩa đúng**; kết luận này chỉ dựa vào hình học và đối chiếu số lượng. Bằng chứng bổ sung: [`vin_er_frame3/02-annotated.png`](cvat_bonus/vin_er_frame3/02-annotated.png), [`vin_er_frame3/03-annotations.json`](cvat_bonus/vin_er_frame3/03-annotations.json) và [`vin_er_frame3/04-qc.md`](cvat_bonus/vin_er_frame3/04-qc.md).
+### 6(b). Bonus CVAT — kiểm tra box nhỏ
+
+Tôi tạo **Task #22 / Job #22** trên CVAT local, import nhãn YOLO 1.1 cho năm ảnh `img_0026`, `img_0051`, `img_0069`, `img_0161` và `img_0183`, tổng cộng **33 box**. Tôi dùng bộ lọc **Width < 20 px** để tìm các box nhỏ. Theo file đo kích thước, số box khớp ở năm ảnh lần lượt là **6, 3, 2, 3, 1**, tổng **15**. Báo cáo `07_error_list_v3.csv` của pipeline có **7 cảnh báo `BOX_TINY`** trên các ảnh này, lần lượt **1, 1, 1, 3, 1**. Số lượng khác nhau vì CVAT lọc riêng chiều rộng dưới 20 px, còn pipeline cảnh báo khi **một trong hai cạnh dưới 12 px**.
+
+Tôi kiểm tra trực tiếp frame 3 (`img_0161.jpg`): sau khi lọc, CVAT còn **3 Objects**, đúng bằng số cảnh báo `BOX_TINY` ở ảnh này. Tôi dùng Vin-ER xuất thêm dữ liệu để đối chiếu: ảnh có **4 box `person`** rộng **31,22; 10,26; 11,40; 11,86 px**. Ba box sau khớp điều kiện lọc, còn box rộng 31,22 px chỉ bị ẩn, không bị xóa. Các số đếm của bốn ảnh còn lại lấy từ file đo, chưa phải kết quả tôi kiểm tra từng frame bằng mắt.
+
+Thuộc tính `can_review` trong CVAT có thể dùng để đánh dấu box cần xem lại. Ở pipeline, công việc tương tự được tổ chức bằng `05_review_queue.csv` dựa trên mã lỗi và mức ưu tiên; pipeline không đọc trực tiếp thuộc tính CVAT này.
+
+Ảnh chụp bộ lọc, frame sau lọc và dữ liệu kiểm tra từ Vin-ER được lưu trong `submission/cvat_bonus/`.
