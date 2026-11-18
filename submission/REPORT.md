@@ -36,8 +36,17 @@
 
 **Điểm mù:** (1) pHash có thể nhầm hai ảnh khác nhau hoặc bỏ sót cặp trùng bị crop mạnh (minh chứng tennis/trượt tuyết ở trên). (2) Model lớn không phải nhãn chuẩn: ở calib ngưỡng chọn vẫn bỏ sót **1/6 WRONG_CLASS**, **2/5 LOOSE_BOX**; nếu model và nhãn cùng sai, cảnh báo có thể không xuất hiện. Vì vậy máy kiểm quy tắc, **người kiểm ý nghĩa**.
 
-## 5. Train raw vs clean (tùy chọn)
-**Chưa chạy train trên GPU/Colab**, không tạo số mAP giả, không kết luận clean tốt hơn raw. Khi train: dùng cùng model/epoch/batch/val/test, **≥ 2 seed mỗi biến thể**; so chênh mAP với độ lệch giữa seed. `clean_v1` hiện chỉ là **bản nháp Hold**.
+## 5. Train raw vs clean (Colab, 2 seed)
+Đã train thật bằng `scripts/train_compare.py`: **YOLO26n**, **20 epoch**, **batch 16**, **imgsz 640**, seed **0 và 1** cho mỗi biến thể; chung **val 40 / test 100 ảnh**. Raw chuẩn bị **224 ảnh**, clean **202 ảnh**. JSON gốc và `comparison.*` ở `submission/results/` (không sửa bằng tay).
+
+| Metric (TB ± SD, 2 seed) | Raw | Clean |
+|---|---:|---:|
+| mAP50 | **0,72575 ± 0,00021** | 0,71180 ± 0,00891 |
+| mAP50–95 | **0,51170 ± 0,00382** | 0,49020 ± 0,00594 |
+| Precision | 0,76355 ± 0,06116 | **0,79295 ± 0,02722** |
+| Recall | **0,64900 ± 0,02814** | 0,63530 ± 0,01725 |
+
+ΔmAP50 (clean − raw) = **−0,01395**, âm ở cả seed 0 (−0,0075) và seed 1 (−0,0204); clean có độ lệch seed lớn hơn raw. Với **chỉ 2 seed**, chưa đủ kết luận khái quát; precision chỉ tăng về trung bình. AP50 `bus` +0,0378, `person` +0,0097, `truck` −0,0975, `car` −0,0058. Nguyên nhân *có thể* gồm thay đổi số ảnh, phân bố lớp và box/nhãn còn lỗi. Đặc biệt **5 ảnh raw rò rỉ sang test** (`LEAK_TEST`) có thể làm mAP baseline cao giả; chưa định lượng được mức ảnh hưởng. Clean vẫn là **bản nháp HOLD** (62/202 cảnh báo chưa duyệt, 80 lượt duyệt mô phỏng), không phải dữ liệu chuẩn. **Không kết luận clean tốt hơn raw.** Xem phân tích và giới hạn: `submission/results/ANALYSIS.md`.
 
 ## 6. Quyết định và dùng AI
 **HOLD** cho đến khi còn **0 ERROR** và tỷ lệ ảnh cảnh báo chưa duyệt **< 10%**; phải có kế hoạch duyệt bổ sung hợp lệ, **không** tăng ngân sách 80 hoặc đổi gate để ép Release.
