@@ -1,0 +1,18 @@
+{
+  "verdict": {
+    "decision": "Hold",
+    "n_errors": 0,
+    "n_warn_images": 62,
+    "n_images": 202,
+    "warn_ratio": 0.3069,
+    "reasons": [
+      "Còn 62/202 ảnh cảnh báo chưa được duyệt (30.69%), đạt/vượt ngưỡng Hold 10.00%."
+    ]
+  },
+  "reviewed": 80,
+  "budget": 80,
+  "seconds": 6.1,
+  "exported": "C:\\My Future\\K5-L23-DAY09-2A202604047-PhamHai-AutoQC-Pipeline-Lab\\submission\\export\\clean_v1",
+  "config_sha1": "78abb4ce79dc9aa9ff39772363bbe5f4ebc45191",
+  "review_sim_sha1": "7988ca22827f780a7043a2300490e679a1697154"
+}
