@@ -22,7 +22,13 @@ def _clip(line):
     top, bottom = max(0.0, y - h / 2), min(1.0, y + h / 2)
     if left >= right or top >= bottom:
         return None
-    return f"{cls} {(left + right) / 2:.6f} {(top + bottom) / 2:.6f} {right - left:.6f} {bottom - top:.6f}"
+    clipped = f"{cls} {(left + right) / 2:.6f} {(top + bottom) / 2:.6f} {right - left:.6f} {bottom - top:.6f}"
+    # Rounding to six decimals can turn a very thin positive box into a zero-size box.
+    # Dropping it is safer than writing an invalid YOLO annotation.
+    _, _, _, clipped_w, clipped_h = parse_yolo_line(clipped)
+    if clipped_w <= 0 or clipped_h <= 0:
+        return None
+    return clipped
 
 
 def fix(ds, issues, cfg):
